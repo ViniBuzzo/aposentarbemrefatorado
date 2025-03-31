@@ -4,5 +4,6 @@ import com.AgiBank.model.Usuario;
 
 public interface UsuarioDAO {
     public boolean criarUsuario(Usuario usuario);
+    Usuario buscarPorId(int id);
 
 }

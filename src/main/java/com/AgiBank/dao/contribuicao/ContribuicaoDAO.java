@@ -7,10 +7,13 @@ import java.time.LocalDate;
 import java.util.List;
 
 public interface ContribuicaoDAO {
-    void registrarContribuicao(int idContribuicao, int idUsuario, double valorSalario, LocalDate periodoInicio,
-                               LocalDate periodoFim) throws SQLException;
+    void adicionar(Contribuicao contribuicao);
 
-    int obterProximoIdContribuicao() throws SQLException;
+    Contribuicao buscarPorId(int idContribuicao);
 
-    List<Contribuicao> consultarHistorico(int idUsuario) throws SQLException;
+    List<Contribuicao> buscarPorUsuario(int idUsuario);
+
+    void atualizar(Contribuicao contribuicao);
+
+    void remover(int idContribuicao);
 }

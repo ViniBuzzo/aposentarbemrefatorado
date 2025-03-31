@@ -4,6 +4,7 @@ import com.AgiBank.model.Usuario;
 import io.github.cdimascio.dotenv.Dotenv;
 
 import java.sql.*;
+import java.time.format.DateTimeFormatter;
 
 import static java.sql.DriverManager.getConnection;
 
@@ -48,5 +49,32 @@ public class UsuarioDAOImpl implements UsuarioDAO {
             System.out.println("Erro ao salvar usuário: " + e.getMessage());
             return false;
         }
+    }
+
+    @Override
+    public Usuario buscarPorId(int id) {
+        String sql = "SELECT * FROM Usuario WHERE idUsuario = ?";
+
+        try (Connection connection = getConnection(url, username, password);
+             PreparedStatement stmt = connection.prepareStatement(sql)) {
+
+            stmt.setInt(1, id);
+            ResultSet rs = stmt.executeQuery();
+
+            if (rs.next()) {
+                return new Usuario(
+                        rs.getString("nome"),
+                        rs.getDate("dataNascimento").toLocalDate().format(DateTimeFormatter.ofPattern("dd/MM/yyyy")),
+                        Usuario.Genero.fromDescricao(rs.getString("genero")),  // ✅ Conversão correta para Enum
+                        Usuario.Profissao.fromDescricao(rs.getString("profissao")),  // ✅ Conversão correta para Enum
+                        rs.getInt("idadeAposentadoriaDesejada")
+                );
+            }
+
+        } catch (SQLException e) {
+            System.out.println("Erro ao buscar usuário: " + e.getMessage());
+        }
+
+        return null;
     }
 }
