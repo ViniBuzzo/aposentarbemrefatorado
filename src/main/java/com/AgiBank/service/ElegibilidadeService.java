@@ -32,6 +32,42 @@ public class ElegibilidadeService {
         return mesesFaltando > 0 && mesesFaltando <= 24;
     }
 
+    public boolean isElegivelPedagio100(Usuario usuario, List<Contribuicao> contribuicoes) {
+        // ✅ 1️⃣ Definir a data da reforma
+        LocalDate dataReforma = LocalDate.of(2019, 11, 13);
+
+        // ✅ 2️⃣ Calcular a idade do usuário na data da reforma
+        int idadeNaReforma = calcularIdadeEm2019(DATA_REFORMA, usuario);
+
+        // ✅ 3️⃣ Determinar a idade mínima necessária para aposentadoria pelo Pedágio 100%
+        int idadeMinima;
+        if (usuario.getProfissao() == Usuario.Profissao.PROFESSOR) {
+            idadeMinima = (usuario.getGenero() == Usuario.Genero.FEMININO) ? 52 : 55;
+        } else {
+            idadeMinima = (usuario.getGenero() == Usuario.Genero.FEMININO) ? 57 : 60;
+        }
+
+        // ✅ 4️⃣ Se o usuário não tinha a idade mínima na reforma, já está fora da regra
+        if (idadeNaReforma < idadeMinima) {
+            return false;
+        }
+
+        // ✅ 5️⃣ Definir o tempo mínimo de contribuição da regra antiga (antes da reforma)
+        int minimoContribuicaoAntiga;
+        if (usuario.getProfissao() == Usuario.Profissao.PROFESSOR) {
+            minimoContribuicaoAntiga = (usuario.getGenero() == Usuario.Genero.FEMININO) ? 25 * 12 : 30 * 12;
+        } else {
+            minimoContribuicaoAntiga = (usuario.getGenero() == Usuario.Genero.FEMININO) ? 30 * 12 : 35 * 12;
+        }
+
+        // ✅ 6️⃣ Calcular quantos meses ele já tinha contribuído até a data da reforma
+        int mesesContribuidosAteReforma = calcularMesesContribuidosAteData(contribuicoes, dataReforma);
+
+        // ✅ 7️⃣ Ele só é elegível se ainda não tinha atingido o tempo mínimo de contribuição
+        return mesesContribuidosAteReforma < minimoContribuicaoAntiga;
+    }
+
+
     /**
      * Verifica se o usuário contribuiu antes da Reforma da Previdência (13/11/2019).
      */
@@ -52,5 +88,13 @@ public class ElegibilidadeService {
                     return (int) ChronoUnit.MONTHS.between(inicio, fim);
                 })
                 .sum();
+    }
+
+    //Calcula a idade em 2019
+    public int calcularIdadeEm2019(LocalDate DATA_REFORMA, Usuario usuario) {
+        if (usuario.getDataNascimento() == null || DATA_REFORMA == null) {
+            throw new IllegalArgumentException("Data de nascimento ou data de referência não podem ser nulas.");
+        }
+        return Period.between(usuario.getDataNascimento(), DATA_REFORMA).getYears();
     }
 }
