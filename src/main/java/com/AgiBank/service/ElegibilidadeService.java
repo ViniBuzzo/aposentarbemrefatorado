@@ -97,4 +97,19 @@ public class ElegibilidadeService {
         }
         return Period.between(usuario.getDataNascimento(), DATA_REFORMA).getYears();
     }
+    public int calcularIdadeMinima(Usuario usuario) {
+        return (usuario.getGenero() == Usuario.Genero.MASCULINO) ? 65 : 62; // Exemplo Brasil
+    }
+
+    public int calcularTempoContribuicao(List<Contribuicao> contribuicoes) {
+        return contribuicoes.size(); // Cada contribuição representa um ano no exemplo
+    }
+
+    public LocalDate calcularDataElegivel(Usuario usuario, int tempoContribuido) {
+        int idadeAtual = Period.between(usuario.getDataNascimento(), LocalDate.now()).getYears();
+        int idadeMinima = calcularIdadeMinima(usuario);
+        int anosFaltando = Math.max(idadeMinima - idadeAtual, 0);
+
+        return LocalDate.now().plusYears(anosFaltando);
+    }
 }

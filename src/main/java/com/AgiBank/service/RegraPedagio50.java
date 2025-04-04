@@ -10,6 +10,7 @@ import java.util.List;
 public class RegraPedagio50 {
 
     private static final LocalDate DATA_CORTE_1994 = LocalDate.of(1994, 7, 1);
+    private static final LocalDate DATA_REFORMA = LocalDate.of(2019, 11, 13);
     private static final double ALIQUOTA_FIXA = 0.31; // 31% fixo do cálculo previdenciário
     private ElegibilidadeService elegibilidadeService;
 
@@ -19,12 +20,12 @@ public class RegraPedagio50 {
 
     public double calcularAposentadoria(Usuario usuario, List<Contribuicao> contribuicoes, double expectativaVida) {
         // 1️⃣ Verificar se o usuário é elegível para o Pedágio 50%
-        if (!elegibilidadeService.isElegivelPedagio50(usuario, contribuicoes)) {
+        if (!isElegivelPedagio50(usuario, contribuicoes)) {
             return 0; // ❌ Se não for elegível, não pode se aposentar pelo Pedágio 50%
         }
 
         // 2️⃣ Calcular o tempo total de contribuição até a reforma de 2019
-        int mesesContribuidosAteReforma = calcularMesesContribuidosAteData(contribuicoes, ElegibilidadeService.DATA_REFORMA);
+        int mesesContribuidosAteReforma = calcularMesesContribuidosAteData(contribuicoes, DATA_REFORMA);
         int anosContribuidosAteReforma = mesesContribuidosAteReforma / 12;
 
         // 3️⃣ Descobrir quanto tempo faltava para a aposentadoria mínima na época (35 anos para homens, 30 para mulheres)
@@ -52,6 +53,27 @@ public class RegraPedagio50 {
     }
 
     /**
+     * Verifica se o usuário é elegível para o Pedágio 50%.
+     */
+    public boolean isElegivelPedagio50(Usuario usuario, List<Contribuicao> contribuicoes) {
+        int mesesContribuidosAteReforma = calcularMesesContribuidosAteData(contribuicoes, DATA_REFORMA);
+
+        // 🚨 Bloqueia se tiver contribuições após a reforma
+        boolean contribuiuDepoisDaReforma = contribuicoes.stream()
+                .anyMatch(c -> c.getPeriodoInicio().isAfter(DATA_REFORMA));
+
+        if (contribuiuDepoisDaReforma) {
+            return false; // 🚫 Fora da regra
+        }
+
+        int anosContribuidosAteReforma = mesesContribuidosAteReforma / 12;
+        int minimoContribuicao = (usuario.getGenero() == Usuario.Genero.MASCULINO) ? 35 : 30;
+
+        // ✅ Elegível se contribuiu antes da reforma, mas não atingiu o mínimo de anos
+        return anosContribuidosAteReforma < minimoContribuicao;
+    }
+
+    /**
      * Calcula o total de meses de contribuição do usuário até uma determinada data.
      */
     private int calcularMesesContribuidosAteData(List<Contribuicao> contribuicoes, LocalDate dataLimite) {
@@ -73,32 +95,22 @@ public class RegraPedagio50 {
         int totalMeses = 0;
 
         for (Contribuicao c : contribuicoes) {
-            // Verificar se a contribuição deve ser considerada (se inicia antes ou em 1994)
-            if (c.getPeriodoInicio().isBefore(DATA_CORTE_1994) || c.getPeriodoInicio().isEqual(DATA_CORTE_1994)) {
-                // Ajusta a data de início se for antes de 1994
-                LocalDate periodoInicio = c.getPeriodoInicio().isBefore(DATA_CORTE_1994) ? DATA_CORTE_1994 : c.getPeriodoInicio();
-                // Considera o fim da contribuição, mas não ultrapassa a data limite (hoje ou outra data de corte)
-                LocalDate periodoFim = c.getPeriodoFim();
-
-                // Calcular o número de meses após a data de corte (1994)
-                long meses = ChronoUnit.MONTHS.between(periodoInicio, periodoFim);
-
-                if (meses > 0) { // Verificar se o período é válido
-                    somaSalarios += c.getValorSalario() * meses;
-                    totalMeses += (int) meses;
-                }
+            // Verificar se a contribuição deve ser considerada (se inicia após 1994)
+            if (!c.getPeriodoInicio().isBefore(DATA_CORTE_1994)) {
+                long meses = ChronoUnit.MONTHS.between(c.getPeriodoInicio(), c.getPeriodoFim());
+                somaSalarios += c.getValorSalario() * meses;
+                totalMeses += meses;
             }
         }
 
-        // Se houver contribuições após 1994, calcular a média
         return (totalMeses > 0) ? (somaSalarios / totalMeses) : 0.0;
     }
-
 
     /**
      * Calcula o fator previdenciário com base no tempo de contribuição e expectativa de vida.
      */
     private double calcularFatorPrevidenciario(int anosContribuidos, double expectativaVida) {
-        return (anosContribuidos * ALIQUOTA_FIXA) / (expectativaVida * 100);
+        double fator = (anosContribuidos * ALIQUOTA_FIXA) / expectativaVida;
+        return Math.max(0.6, fator); // ✅ Mantém um mínimo de 60%
     }
 }

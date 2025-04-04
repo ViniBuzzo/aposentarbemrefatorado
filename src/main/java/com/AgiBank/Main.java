@@ -4,11 +4,15 @@ import com.AgiBank.controller.ContribuicaoController;
 import com.AgiBank.controller.UsuarioController;
 import com.AgiBank.dao.contribuicao.ContribuicaoDAOImpl;
 import com.AgiBank.dao.usuario.UsuarioDAOImpl;
+import com.AgiBank.model.Contribuicao;
+import com.AgiBank.model.Usuario;
 import com.AgiBank.view.contribuicao.ContribuicaoView;
+import com.AgiBank.view.resultadoAposentadoria.SimuladorView;
 import com.AgiBank.view.usuario.UsuarioView;
 
 import java.io.PrintStream;
 import java.nio.charset.StandardCharsets;
+import java.util.List;
 
 public class Main {
     public static void main(String[] args) {
@@ -34,6 +38,18 @@ public class Main {
 
         // Iniciar o processo de cadastro das contribuições para o usuário
         contribuicaoView.iniciarCadastroContribuicoes(idUsuario);
+
+        // 🔹 Recuperar as contribuições cadastradas
+        List<Contribuicao> contribuicoes = contribuicaoDAO.buscarPorUsuario(idUsuario);
+
+        // 🔹 Inicializar a SimuladorView e exibir a simulação
+        Usuario usuario = usuarioDAO.buscarPorId(idUsuario);
+
+        if (usuario != null && !contribuicoes.isEmpty()) {
+            SimuladorView simuladorView = new SimuladorView();
+            simuladorView.exibirSimulacao(usuario, contribuicoes);
+        } else {
+            System.out.println("⚠️ Erro: Usuário ou contribuições não encontrados. Simulação não realizada.");
+        }
     }
 }
-

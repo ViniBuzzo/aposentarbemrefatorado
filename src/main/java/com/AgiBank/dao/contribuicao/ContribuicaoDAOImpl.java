@@ -105,4 +105,6 @@ public class ContribuicaoDAOImpl implements ContribuicaoDAO{
                 rs.getDate("periodoFim").toLocalDate()
         );
     }
+
+
 }
