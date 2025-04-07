@@ -28,7 +28,12 @@ public class RegraAposReformaService {
             throw new IllegalArgumentException("A idade de aposentadoria desejada deve ser maior que a idade atual!");
         }
 
-        boolean contribuiuAntesDaReforma = elegibilidadeService.contribuiuAntesDaReforma(contribuicoes);
+        boolean contribuiuSomenteAposReforma = elegibilidadeService.contribuiuSomenteAposReforma(contribuicoes);
+
+        // ✅ Verificação de elegibilidade adicionada
+        if (!contribuiuSomenteAposReforma) {
+            return 0.0;
+        }
 
         int mesesContribuidos = calcularTotalMesesContribuidos(contribuicoes);
         int anosContribuidos = mesesContribuidos / 12;
@@ -43,17 +48,9 @@ public class RegraAposReformaService {
         int idadeMinima;
 
         if (usuario.getProfissao() == Usuario.Profissao.PROFESSOR) {
-            if (contribuiuAntesDaReforma) {
-                // Professores que já estavam no sistema antes da reforma têm regras especiais
-                minimoContribuicao = 25;
-                idadeMinima = (usuario.getGenero() == Usuario.Genero.FEMININO) ? 52 : 55; // Regra de transição
-            } else {
-                // Após reforma
-                minimoContribuicao = 25;
-                idadeMinima = (usuario.getGenero() == Usuario.Genero.FEMININO) ? 57 : 60;
-            }
+            minimoContribuicao = 25;
+            idadeMinima = (usuario.getGenero() == Usuario.Genero.FEMININO) ? 57 : 60;
         } else {
-            // Regras padrão (não professor)
             minimoContribuicao = (usuario.getGenero() == Usuario.Genero.FEMININO) ? 15 : 20;
             idadeMinima = (usuario.getGenero() == Usuario.Genero.FEMININO) ? 62 : 65;
         }

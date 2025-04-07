@@ -2,13 +2,11 @@ package com.AgiBank.view.resultadoAposentadoria;
 
 import com.AgiBank.model.Contribuicao;
 import com.AgiBank.model.Usuario;
-import com.AgiBank.service.ElegibilidadeService;
-import com.AgiBank.service.RegraAposReformaService;
-import com.AgiBank.service.RegraPedagio50;
-import com.AgiBank.service.RegraPedagio100;
+import com.AgiBank.service.*;
 
 import java.time.LocalDate;
 import java.util.List;
+import java.util.Map;
 
 public class SimuladorView {
 
@@ -68,6 +66,27 @@ public class SimuladorView {
         } catch (Exception e) {
             System.out.println("❌ Erro ao calcular Regra Pós-Reforma: " + e.getMessage());
         }
+
+        // 🟢 Regra por Pontos
+        RegraPontos regraPontos = new RegraPontos(elegibilidadeService);
+        Map<String, Object> resultadoPontos = regraPontos.calcularRegraPontos(usuario, contribuicoes, usuario.getIdadeAposentadoriaDesejada());
+
+        boolean elegivelPontos = (boolean) resultadoPontos.get("elegivel");
+        if (elegivelPontos) {
+            double valor = (double) resultadoPontos.get("valorEstimado");
+            int ano = (int) resultadoPontos.get("anoElegivel");
+
+            System.out.printf("✅ Regra por Pontos: Elegível\n   📅 Ano da aposentadoria: %d\n   💰 Valor estimado: R$ %.2f\n\n", ano, valor);
+        } else {
+            int idadeEstimativa = (int) resultadoPontos.get("idadeElegivel");
+            int anoEstimativa = (int) resultadoPontos.get("anoElegivel");
+            double valorEstimado = (double) resultadoPontos.get("valorEstimado");
+
+            System.out.printf("❌ Regra por Pontos: Ainda não elegível\n");
+            System.out.printf("   📅 Estimativa de elegibilidade: Ano %d, com %d anos de idade\n", anoEstimativa, idadeEstimativa);
+            System.out.printf("   💰 Valor estimado na data: R$ %.2f\n\n", valorEstimado);
+        }
+
 
         System.out.println("🔹 🔹 🔹 Fim da Simulação 🔹 🔹 🔹");
     }

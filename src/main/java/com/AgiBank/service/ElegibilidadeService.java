@@ -57,9 +57,6 @@ public class ElegibilidadeService {
         int pontosProjetados = idadeAposentadoriaDesejada + tempoContribuicaoAnos;
         int pontosMinimos = getPontuacaoMinima(usuario.getGenero(), anoDesejado);
 
-        System.out.println("🔍 [Elegibilidade Pontos] Ano desejado: " + anoDesejado);
-        System.out.println("🔢 Pontos projetados: " + pontosProjetados + " | Pontuação mínima exigida: " + pontosMinimos);
-
         return pontosProjetados >= pontosMinimos;
     }
 
@@ -78,6 +75,12 @@ public class ElegibilidadeService {
     public boolean contribuiuAntesDaReforma(List<Contribuicao> contribuicoes) {
         return contribuicoes.stream()
                 .anyMatch(c -> c.getPeriodoInicio().isBefore(DATA_REFORMA) || c.getPeriodoFim().isBefore(DATA_REFORMA));
+    }
+
+
+    public boolean contribuiuSomenteAposReforma(List<Contribuicao> contribuicoes) {
+        return contribuicoes.stream()
+                .allMatch(c -> !c.getPeriodoInicio().isBefore(DATA_REFORMA) && !c.getPeriodoFim().isBefore(DATA_REFORMA));
     }
 
     private int calcularMesesContribuidosAteData(List<Contribuicao> contribuicoes, LocalDate dataLimite) {
@@ -102,7 +105,6 @@ public class ElegibilidadeService {
         return (usuario.getGenero() == Usuario.Genero.MASCULINO) ? 65 : 62;
     }
 
-    // ✅ AQUI ESTÁ O NOVO MÉTODO!
     public int calcularTempoContribuicao(List<Contribuicao> contribuicoes) {
         int totalMeses = 0;
         for (Contribuicao c : contribuicoes) {
